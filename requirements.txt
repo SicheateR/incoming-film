@@ -1,0 +1,5 @@
+streamlit
+google-generativeai
+gspread
+google-auth          # Library baru pengganti oauth2client
+Pillow
