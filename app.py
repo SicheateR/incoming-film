@@ -80,8 +80,8 @@ def save_to_sheets(data_row):
         return False
 
 # --- UI APP ---
-st.title("📸 QC Single Scanner")
-st.write("Scan satu per satu untuk akurasi data teknis yang lebih baik.")
+st.title("📸 Incoming LLDPE Scanner")
+st.write("Bersama Sunari Membangun Kiyusi")
 
 # Inisialisasi Kunci Anti-Double Send
 if 'sudah_kirim' not in st.session_state:
