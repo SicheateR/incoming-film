@@ -22,7 +22,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Set Tampilan Halaman
-st.set_page_config(page_title="QC Scanner Metaform", page_icon="📸")
+st.set_page_config(page_title="LLDPE Scanner", page_icon="📸")
 
 # --- 2. FUNGSI AUTOCORRECT & REGEX BATCH ---
 def refine_batch_number(raw_batch):
@@ -61,7 +61,7 @@ def refine_batch_number(raw_batch):
             datetime.strptime(date_str, "%d-%m-%Y")
             tgl_kedatangan = date_str
     except Exception:
-        tgl_kedatangan = "" # Jika gagal, biarkan kosong agar bisa diisi manual
+        tgl_kedatangan = "Tidak Terdeteksi" # Jika gagal, biarkan kosong agar bisa diisi manual
 
     # 3. Merapikan format nomor batch (Regex)
     parts = re.split(r'[^A-Z0-9]', text)
@@ -192,7 +192,7 @@ if uploaded_file:
         
         with st.form("verify_form"):
             st.subheader("Data Hasil Scan")
-            f_mat = st.text_input("ukuran", f"LLDPE {d.get('nama_film')} {d.get('lebar')}mm x {d.get('thickness')}µm")
+            f_mat = st.text_input("ukuran", f"{d.get('nama_film')} {d.get('lebar')}mm x {d.get('thickness')}µm")
             # Field Baru untuk Tanggal Kedatangan hasil konversi Batch
             f_tgl_batch = st.text_input("Tanggal Kedatangan (Dari Batch)", d.get('tanggal_kedatangan_batch'))
             c1, c2 = st.columns(2)
