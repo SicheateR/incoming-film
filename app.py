@@ -11,17 +11,14 @@ from datetime import datetime
 import difflib
 
 # --- KONFIGURASI AWAL ---
-# Masukkan API Key Gemini Anda di sini
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 SHEET_NAME = st.secrets["SHEET_NAME"]
-# Pastikan file credentials.json ada di folder yang sama
 #CREDENTIALS_FILE = 'credentials.json' 
+MONTH_MAP = {'A': '10', 'B': '11', 'C': '12'}
 
-# Inisialisasi Gemini 2.5 Flash
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# Set Tampilan Halaman
 st.set_page_config(page_title="LLDPE Scanner", page_icon="📸")
 
 # --- 2. FUNGSI AUTOCORRECT & REGEX BATCH ---
@@ -37,7 +34,6 @@ def refine_batch_number(raw_batch):
         return s.replace('O', '0').replace('I', '1').replace('L', '1').replace('S', '5').replace('J', '1')
 
     # 2. Ambil 5 karakter pertama (YYMDD)
-    # Kita bersihkan dulu karakternya dari kesalahan OCR
     p1_raw = fix_date_chars(text[:5])
     
     tgl_kedatangan = ""
@@ -47,7 +43,7 @@ def refine_batch_number(raw_batch):
         m_char = p1_raw[2]
         dd = p1_raw[3:5]
         
-        # Logika Mapping Bulan yang Lebih Kuat
+        # Logika Mapping Bulan
         mm = None
         if m_char in MONTH_MAP:
             mm = MONTH_MAP[m_char] # Mengambil A, B, atau C
@@ -86,7 +82,6 @@ def refine_batch_number(raw_batch):
 # --- FUNGSI AI (AKURASI TINGGI) ---
 def extract_data_qc(image_file):
     img = Image.open(image_file)
-    # Resolusi tinggi untuk detail angka kecil di baris 8-10
     img.thumbnail((3000, 3000)) 
     
     prompt = """
@@ -132,20 +127,19 @@ def extract_data_qc(image_file):
         clean_json = response.text.strip().replace('```json', '').replace('```', '')
         data = json.loads(clean_json)
         
-        # JALANKAN REFINERY DI SINI
         batch_raw = data.get('no_batch', '')
         cleaned_b, tgl_kedatangan = refine_batch_number(batch_raw)
         
         # Masukkan kembali ke dictionary hasil scan
         data['no_batch'] = cleaned_b
-        data['tanggal_kedatangan_batch'] = tgl_kedatangan # Ini yang akan dibaca UI
+        data['tanggal_kedatangan_batch'] = tgl_kedatangan
         
         return data
     except Exception as e:
         st.error(f"Error Parsing: {e}")
         return None
 
-# --- FUNGSI SIMPAN (KOLOM A & NO DOUBLE SEND) ---
+# --- FUNGSI SIMPAN  ---
 def save_to_sheets(data_row):
     try:
         # Gunakan 'from_service_account_info' untuk deploy [cite: 2025-12-18, 2025-12-19]
@@ -166,7 +160,7 @@ def save_to_sheets(data_row):
 st.title("📸 QC Single Scanner")
 st.write("Scan satu per satu untuk akurasi data teknis yang lebih baik.")
 
-# Inisialisasi Kunci Anti-Double Send
+# Inisialisasi Anti-Double Send
 if 'sudah_kirim' not in st.session_state:
     st.session_state['sudah_kirim'] = False
 
