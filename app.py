@@ -119,6 +119,9 @@ def extract_data_qc(image_file):
     "C8 VCM","C8 VKJ","C8+","EP","SCU(16)","SP(17)","SP(17)-WP","SP8N",
     "SP-B","SP-F","SP-LC","SP-P","SP-WP"]
 
+    INSTRUKSI KHUSUS NO SURAT JALAN:
+    1. NO SURAT JALAN mempunyai 4 format. Pilih salah satu dari :["SJRBFI-XXXXXXXX", "SIA-XXXXXXXXX", "SPXXXXXXXX", "XXX/BJ/(angka romawi)/tahun"].
+
     EKSTRAK KE JSON (tanpa ```json):
     {
       "tanggal": "dd-mm-yyyy", "nama_film" : "", "ukuran": "xx μm x XXX mm", "lebar": "", "thickness": "",
