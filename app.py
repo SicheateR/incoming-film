@@ -100,7 +100,7 @@ def extract_data_qc(image_file):
     4. JANGAN mengambil angka dari tabel 'Hasil' baris nomor 2 (lebar film) dan nomor 3 (ketebalan). 
        Gunakan nilai dari baris 'Ukuran' di header saja
     
-    INSTRUKSI KHUSUS NO BATCH
+    INSTRUKSI KHUSUS NO BATCH:
     1. Cari baris bertuliskan 'No. Batch (INTERNAL)' dibagian atas (Header).
     2. No. Batch hanya ada sebanyak 1 baris
     3. Nomor batch memiliki format: XXXXX/(ID)/XXXXX/(IDS)
@@ -109,12 +109,21 @@ def extract_data_qc(image_file):
     6. PENTING: Jika ada segmen tambahan setelah IDS (contoh: /FZF, /PROD, /XYZ), JANGAN DIHAPUS. Ekstrak seluruh rangkaian karakter tersebut secara utuh.
     7. Contoh jika di dokumen tertulis '25C15/SB/25C15/HLF/FZF', maka ekstrak sebagai '25C15/SB/25C15/BLF/FZF'.
 
+    INSTRUKSI KHUSUS NAMA FILM:
+    1. NAMA MATERIAL SELALU DIAWALI DENGAN "LLDPE". Jika tidak ada LLDPE, tambahkan "LLDPE" diawal nama
+    2. Setelah "LLDPE" harus selalu diikuti salah satu dari :
+    ["C4","C4 AST","C4 BAG","C4 ESS","C4 FZF","C4 KCK","C4 KMR","C4 PWD",
+    "C4 SNK","C4 STDG","C4 STDG POUCH","C4 STP","C4 WHITE","C4 WHITE STP","C8","C8 BAG",
+    "C8 BNH","C8 BRS","C8 EASY PEEL","C8 FZF","C8 KGK","C8 KKC","C8 KML","C8 KMR",
+    "C8 MBTL","C8 MURNI","C8 PSD","C8 PWD","C8 SP-LC","C8 STDG","C8 STP","C8 VACUUM",
+    "C8 VCM","C8 VKJ","C8+","EP","SCU(16)","SP(17)","SP(17)-WP","SP8N",
+    "SP-B","SP-F","SP-LC","SP-P","SP-WP"]
 
     EKSTRAK KE JSON (tanpa ```json):
     {
       "tanggal": "dd-mm-yyyy", "nama_film" : "", "ukuran": "xx μm x XXX mm", "lebar": "", "thickness": "",
-      "no_surat_jalan": "", "no_po": "PO-XX-XXXXXX", "no_batch": "", "jml_datang": "",
-      "cof": "0,XX / 0,XX", "seal_temp": "", "hasil_seal": "", 
+      "no_surat_jalan": "", "no_po": "PO-XX-XXXXXX", "no_batch": "", "jml_datang": "(format hanya angka bulat)",
+      "cof": "0,XX / 0,XX", "initial_seal_temp": "", "hasil_initial_seal": "", 
       "tensile_md": "", "tensile_td": "", "elongation_md": "", "elongation_td": "", 
       "modulus_md": "", "modulus_td": "",
       "supplier": "Pilih: BLASFOLIE/SAKA/NUSA EKA/PANVERTA", "sampling_size": ""
@@ -188,9 +197,9 @@ if uploaded_file:
             st.subheader("Data Hasil Scan")
             f_mat = st.text_input("ukuran", f"{d.get('nama_film')} {d.get('lebar')}mm x {d.get('thickness')}µm")
             # Field Baru untuk Tanggal Kedatangan hasil konversi Batch
-            f_tgl_batch = st.text_input("Tanggal Kedatangan (Dari Batch)", d.get('tanggal_kedatangan_batch'))
             c1, c2 = st.columns(2)
             with c1:
+                f_tgl_batch = st.text_input("Tanggal Kedatangan (Dari Batch)", d.get('tanggal_kedatangan_batch'))
                 f_tgl = st.text_input("Tanggal", d.get('tanggal'))
                 f_sj = st.text_input("No Surat Jalan", d.get('no_surat_jalan'))
                 f_po = st.text_input("No PO", d.get('no_po'))
@@ -198,14 +207,16 @@ if uploaded_file:
                 f_datang = st.text_input("Jumlah Datang", d.get('jml_datang'))
                 f_sup = st.selectbox("Supplier", ["BLASFOLIE", "SAKA", "NUSA EKA", "PANVERTA"], 
                                      index=["BLASFOLIE", "SAKA", "NUSA EKA", "PANVERTA"].index(d.get('supplier')) if d.get('supplier') in ["BLASFOLIE", "SAKA", "NUSA EKA", "PANVERTA"] else 0)
-
+                f_init = st.text_input("Initial Seal Temperature", d.get('initial_seal_temp'))
             with c2:
+                f_cof = st.text_input("COF", d.get('cof'))
                 f_tmd = st.text_input("Tensile MD (Row 8)", d.get('tensile_md'))
                 f_ttd = st.text_input("Tensile TD (Row 8)", d.get('tensile_td'))
                 f_emd = st.text_input("Elongation MD (Row 9)", d.get('elongation_md'))
                 f_etd = st.text_input("Elongation TD (Row 9)", d.get('elongation_td'))
                 f_mmd = st.text_input("Modulus MD (Row 10)", d.get('modulus_md'))
                 f_mtd = st.text_input("Modulus TD (Row 10)", d.get('modulus_td'))
+                f_seal = st.text_input("Sealing Strength", d.get('hasil_initial_seal'))
 
             # Tombol Kirim dengan Kunci
             if st.form_submit_button("✅ Konfirmasi & Kirim"):
@@ -215,7 +226,7 @@ if uploaded_file:
                     start_send = time.time()
                     row = [
                         f_tgl_batch, f_tgl, f_mat, f_sj, f_po, f_batch, "", "", f_datang, "", d.get('cof'),
-                        d.get('seal_temp'), d.get('hasil_seal'), f_tmd, f_ttd, f_emd, f_etd, 
+                        f_sup, f_seal, f_tmd, f_ttd, f_emd, f_etd, 
                         f_mmd, f_mtd, "", "", "", f_sup, d.get('sampling_size')
                     ]
                     
