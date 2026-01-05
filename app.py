@@ -420,7 +420,6 @@ def refine_batch_number(raw_batch):
 # --- FUNGSI AI (AKURASI TINGGI) ---
 def extract_data_qc(image_file, material_type):
     img = Image.open(image_file)
-    # Resolusi tinggi untuk detail angka kecil di baris 8-10
     img.thumbnail((3000, 3000)) 
     
     prompt = MAT_CONFIG[material_type]["prompt"]
@@ -436,8 +435,7 @@ def extract_data_qc(image_file, material_type):
         
         # Masukkan kembali ke dictionary hasil scan
         data['no_batch'] = cleaned_b
-        data['tanggal_kedatangan_batch'] = tgl_kedatangan # Ini yang akan dibaca UI
-        
+        data['tanggal_kedatangan_batch'] = tgl_kedatangan
         return data
     except Exception as e:
         st.error(f"Error Parsing: {e}")
@@ -446,7 +444,6 @@ def extract_data_qc(image_file, material_type):
 # --- FUNGSI SIMPAN  ---
 def save_to_sheets(data_row):
     try:
-        # Gunakan 'from_service_account_info' untuk deploy [cite: 2025-12-18, 2025-12-19]
         scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scopes)
         client = gspread.authorize(creds)
@@ -460,6 +457,12 @@ def save_to_sheets(data_row):
         st.error(f"Gagal akses Google Sheets: {e}")
         return False
 
+def rotate_image():
+    st.session_state['rotation_angle'] = (st.session_state['rotation_angle'] - 90) % 360
+
+if 'rotation_angle' not in st.session_state:
+    st.session_state['rotation_angle'] = 0
+
 # --- UI APP ---
 st.title("📸 Incoming QC Scanner")
 st.write("Bersama Sunari Membangun Kiyusi")
@@ -472,14 +475,23 @@ if 'sudah_kirim' not in st.session_state:
 uploaded_file = st.file_uploader("Pilih Foto Checksheet", type=["jpg","jpeg","png"])
 
 if uploaded_file:
-    st.image(Image.open(uploaded_file), caption="Preview Foto", use_container_width=True)
+    img = Image.open(uploaded_file)
+
+    img_rotated = img.rotate(st.session_state['rotation_angle'], expand=True)
+
+    st.image(img_rotated, caption="Preview Gambar", width='stretch')
+    
+    # Tombol untuk memutar
+    if st.button("🔄 Putar 90°"):
+        rotate_image()
+        st.rerun()
     
     if st.button("🚀 Mulai Analisa"):
-        st.session_state['sudah_kirim'] = False # Reset kunci saat scan baru
+        st.session_state['sudah_kirim'] = False
         st.session_state['mat_scan'] = material_type
         start_scan = time.time()
         with st.spinner('Sedang membaca data ...'):
-            res = extract_data_qc(uploaded_file, material_type)
+            res = extract_data_qc(img_rotated, material_type)
             if res:
                 st.session_state['qc_res'] = res
                 st.session_state['scan_dur'] = time.time() - start_scan
@@ -495,7 +507,7 @@ if uploaded_file:
             st.subheader(f"Data Hasil Scan {mat_type}")
             f_mat = st.text_input("ukuran", f"{d.get('nama_film')} {d.get('lebar')}mm x {d.get('thickness')}µm")
             f_tgl_batch = st.text_input("Tanggal Kedatangan (Batch)", d.get('tanggal_kedatangan_batch', ""))
-            # 2. Render input field secara dinamis dari config
+            # Render input field secara dinamis dari config
             u = {} # Dictionary untuk menampung input user
             cols = st.columns(2)
             display_map = MAT_CONFIG[mat_type]["display_names"]
@@ -505,7 +517,7 @@ if uploaded_file:
                     u[key] = st.text_input(label, d.get(key, ""))
             
             if st.form_submit_button("✅ Konfirmasi & Kirim"):
-            # --- LOGIKA MAPPING KOLOM (Sesuai Permintaan Anda) ---
+            # --- LOGIKA MAPPING KOLOM ---
                 if mat_type == "LLDPE" or mat_type == "CPP":
                     row = [
                             f_tgl_batch, u.get('tanggal'), f_mat, u.get('no_surat_jalan'), 
