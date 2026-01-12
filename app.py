@@ -420,7 +420,7 @@ def refine_batch_number(raw_batch):
 # --- FUNGSI AI (AKURASI TINGGI) ---
 def extract_data_qc(image_file, material_type):
     img = image_file
-    img.thumbnail((3000, 3000)) 
+    img.thumbnail((1600, 1600)) 
     
     prompt = MAT_CONFIG[material_type]["prompt"]
     
